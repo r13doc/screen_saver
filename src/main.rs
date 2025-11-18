@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 mod control_protocols;
 use control_protocols::screen_control::{SetInterval, Ticks};
 use serde::{Serialize, Deserialize};
@@ -5,13 +6,13 @@ use std::{time::Duration, fs};
 use std::env::current_dir;
 use tokio_stream::StreamExt;
 use zbus::{Connection, Result, proxy, zvariant::{OwnedObjectPath, Type}, Proxy};
-use image::{load, Frame, RgbaImage};
+use image::{Frame, RgbaImage};
 use percent_encoding::percent_decode_str;
 use zbus::{zvariant::{as_value::{self}}};
 use url::Url;
 use tokio;
 use console_subscriber;
-use tokio::time::{sleep, sleep_until, Instant};
+use tokio::time::{sleep, Instant};
 use chrono::Local;
 
 
@@ -124,7 +125,7 @@ fn time_now() -> String {
     time.push('\n');
     time
 }
-
+// some problem with reducing  memory used with desktop portal kde....
 async fn wayland_screenshot() -> Result<()> {
     let folder_name = "screens";
 
