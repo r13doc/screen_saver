@@ -1,0 +1,20 @@
+[package]
+name = "screen_saver"
+version = "0.1.0"
+edition = "2024"
+
+[build]
+rustflags = ["--cfg", "tokio_unstable"]
+
+
+[dependencies]
+tokio = {version = "1.47.1", features = ["macros", "rt-multi-thread", "signal"]}
+image = {version = "0.25.8", features = ["png",]}
+zbus = {version = "5.12.0", features = ["tokio"]}
+tokio-stream = {version = "0.1.17", features = ["default"]}
+serde = "1.0.228"
+rand = "0.10.0-rc.5"
+url = "2.5.7"
+percent-encoding = "2.3.2"
+console-subscriber = {version = "0.5.0", features = ["default"]}
+chrono = {version = "0.4.42", features = ["default"]}
