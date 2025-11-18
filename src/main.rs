@@ -11,7 +11,7 @@ use zbus::{zvariant::{as_value::{self}}};
 use url::Url;
 use tokio;
 use console_subscriber;
-use tokio::time::{sleep_until, Instant};
+use tokio::time::{sleep, sleep_until, Instant};
 use chrono::Local;
 
 
@@ -94,12 +94,14 @@ fn uri_to_frame(uri:&str) -> Result<Frame> {
 struct Screen {
     interval: Duration,
     duration: Duration,
+    time_begin: Instant,
 }
 
 impl Screen {
     fn init() -> Self {
         // set intervals
         let interval = SetInterval::Ticks(Ticks::Minutes);
+        let time_begin = Instant::now();
         let interval = interval
             .ticks_minutes(1)
             .expect("error duration settings");
@@ -110,7 +112,8 @@ impl Screen {
             .expect("error duration settings");
         Self {
             interval,
-            duration
+            duration,
+            time_begin,
         }
     }
 }
@@ -128,7 +131,7 @@ async fn wayland_screenshot() -> Result<()> {
     if !current_dir()?.join(folder_name).exists() {
         fs::create_dir(folder_name).expect("ds");
     }
-    let Screen {interval, duration} = Screen::init();
+    let Screen {interval, duration, time_begin} = Screen::init();
     let options_str = OptionsScreen::init();
     let handle_token = &options_str.handle_token;
     let connection = Connection::session().await?;
@@ -141,11 +144,11 @@ async fn wayland_screenshot() -> Result<()> {
     let request = RequestProxy::new(&connection, path).await?;
 
     let proxy_screen = ScreenshotProxy::new(&connection).await?;
-    let time_beg = Instant::now();
+
     // interval process
     tokio::spawn(async move {
         loop {
-            sleep_until(Instant::now() + Duration::from_secs(2)).await;
+            sleep(interval).await;
             let _res = proxy_screen.screenshot("".to_string(), &options_str).await.unwrap();
         }
     });
@@ -157,13 +160,12 @@ async fn wayland_screenshot() -> Result<()> {
                 0 => {
                     let uri = args.results.uri;
                     let image = uri_to_buf_img(uri.as_str()).expect("uri reading problem");
-
+                    println!("11");
                     let dir = current_dir().unwrap()
                         .join(folder_name)
                         .join(time_now())
                         .with_extension("png");
                     image.save(dir).unwrap();
-                    break;
                 }
                 1 => {println!("The user cancelled")},
                 _ => {eprintln!("Error: Could not complete task");}
@@ -172,7 +174,7 @@ async fn wayland_screenshot() -> Result<()> {
     });
 
     loop {
-        if time_beg.elapsed() > Duration::from_secs(25) {
+        if time_begin.elapsed() > duration {
             connection.close().await?;
             break;
         }
@@ -182,7 +184,7 @@ async fn wayland_screenshot() -> Result<()> {
 
 #[tokio::main]
 async fn main() {
-    console_subscriber::init();
+    //console_subscriber::init();
     wayland_screenshot().await.unwrap();
 }
 
